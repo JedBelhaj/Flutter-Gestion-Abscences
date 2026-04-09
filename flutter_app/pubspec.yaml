@@ -1,6 +1,6 @@
 name: flutter_app
 description: "A new Flutter project."
-publish_to: 'none'
+publish_to: "none"
 version: 0.1.0
 
 environment:
@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+    http: ^1.2.0 # appels API REST
+    shared_preferences: ^2.2.2 # sauvegarde session utilisateur
 
 dev_dependencies:
   flutter_test:
