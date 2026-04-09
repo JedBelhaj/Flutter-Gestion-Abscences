@@ -1,0 +1,14 @@
+# Flutter
+flutter_app/.dart_tool/
+flutter_app/.idea/
+flutter_app/build/
+flutter_app/.packages
+flutter_app/pubspec.lock
+
+# PHP
+backend/vendor/
+backend/.env
+
+# OS
+.DS_Store
+Thumbs.db
