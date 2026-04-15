@@ -9,8 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-    http: ^1.2.0 # appels API REST
-    shared_preferences: ^2.2.2 # sauvegarde session utilisateur
+  http: ^1.2.0 # appels API REST
+  shared_preferences: ^2.2.2 # sauvegarde session utilisateur
 
 dev_dependencies:
   flutter_test:
