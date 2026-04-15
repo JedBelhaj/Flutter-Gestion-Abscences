@@ -28,6 +28,10 @@ $base = '/backend/gest_absence_api';
 <body>
 	<h1>gest_absence_api - quick test page</h1>
 	<p class="hint">No auth mode: use enseignant_id and etudiant_id directly.</p>
+	<p class="hint">
+		Interactive docs: <a href="./docs/" target="_blank" rel="noopener">Swagger UI</a>
+		| Spec file: <a href="./docs/openapi.json" target="_blank" rel="noopener">openapi.json</a>
+	</p>
 
 	<div class="grid">
 		<section class="card">

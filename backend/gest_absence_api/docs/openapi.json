@@ -1,0 +1,660 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Gest Absence API",
+    "description": "Interactive OpenAPI documentation for the PHP backend.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost/backend/gest_absence_api",
+      "description": "Local XAMPP server"
+    }
+  ],
+  "tags": [
+    { "name": "Auth" },
+    { "name": "Admin" },
+    { "name": "Enseignant" },
+    { "name": "Etudiant" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "CustomToken"
+      },
+      "tokenQuery": {
+        "type": "apiKey",
+        "in": "query",
+        "name": "token"
+      }
+    },
+    "schemas": {
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "message": { "type": "string", "example": "Invalid credentials" }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "admin@school.tn"
+          },
+          "password": { "type": "string", "example": "admin123" },
+          "action": { "type": "string", "example": "login" }
+        }
+      },
+      "AuthUser": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "nom": { "type": "string", "example": "Admin" },
+          "prenom": { "type": "string", "example": "Systeme" },
+          "email": { "type": "string", "example": "admin@school.tn" },
+          "role": { "type": "string", "example": "admin" },
+          "enseignant_id": { "type": "integer", "nullable": true },
+          "etudiant_id": { "type": "integer", "nullable": true }
+        }
+      },
+      "AuthSuccess": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "token": { "type": "string", "example": "<token>" },
+          "user": { "$ref": "#/components/schemas/AuthUser" }
+        }
+      },
+      "ClassItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "nom": { "type": "string", "example": "CI2-A" },
+          "niveau": { "type": "string", "example": "Cycle Ingenieur 2" }
+        }
+      },
+      "TeacherItem": {
+        "type": "object",
+        "properties": {
+          "enseignant_id": { "type": "integer", "example": 1 },
+          "utilisateur_id": { "type": "integer", "example": 2 },
+          "nom": { "type": "string", "example": "Ben Ali" },
+          "prenom": { "type": "string", "example": "Sami" },
+          "email": { "type": "string", "example": "sami@school.tn" },
+          "specialite": { "type": "string", "example": "Informatique" }
+        }
+      },
+      "StudentItem": {
+        "type": "object",
+        "properties": {
+          "etudiant_id": { "type": "integer", "example": 1 },
+          "utilisateur_id": { "type": "integer", "example": 3 },
+          "nom": { "type": "string", "example": "Trabelsi" },
+          "prenom": { "type": "string", "example": "Amine" },
+          "email": { "type": "string", "example": "amine@school.tn" },
+          "classe_id": { "type": "integer", "example": 1 },
+          "classe_nom": { "type": "string", "example": "CI2-A" },
+          "niveau": { "type": "string", "example": "Cycle Ingenieur 2" }
+        }
+      },
+      "SessionItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "enseignant_id": { "type": "integer", "example": 1 },
+          "classe_id": { "type": "integer", "example": 1 },
+          "matiere_id": { "type": "integer", "example": 1 },
+          "date_seance": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-04-15"
+          },
+          "heure_debut": { "type": "string", "example": "09:00:00" },
+          "heure_fin": { "type": "string", "example": "10:30:00" }
+        }
+      },
+      "AbsenceEntry": {
+        "type": "object",
+        "required": ["etudiant_id", "statut"],
+        "properties": {
+          "etudiant_id": { "type": "integer", "example": 1 },
+          "statut": {
+            "type": "string",
+            "enum": ["present", "absent"],
+            "example": "absent"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/auth/login.php": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Validate token and return current user",
+        "security": [{ "bearerAuth": [] }, { "tokenQuery": [] }],
+        "responses": {
+          "200": {
+            "description": "Current user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "user": { "$ref": "#/components/schemas/AuthUser" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthSuccess" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/classes.php": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "List classes or get one class",
+        "security": [{ "bearerAuth": [] }, { "tokenQuery": [] }],
+        "parameters": [
+          {
+            "name": "classe_id",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 1 },
+            "required": false,
+            "description": "Optional class id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Classes response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "oneOf": [
+                        { "$ref": "#/components/schemas/ClassItem" },
+                        {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/ClassItem" }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Admin"],
+        "summary": "Create or update class",
+        "security": [{ "bearerAuth": [] }, { "tokenQuery": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "classe_id": { "type": "integer", "minimum": 1 },
+                  "nom": { "type": "string", "example": "CI2-B" },
+                  "niveau": { "type": "string", "example": "Cycle Ingenieur 2" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated" },
+          "201": { "description": "Created" }
+        }
+      }
+    },
+    "/admin/enseignants.php": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "List teachers or get one teacher",
+        "security": [{ "bearerAuth": [] }, { "tokenQuery": [] }],
+        "parameters": [
+          {
+            "name": "enseignant_id",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 1 },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Teachers response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "oneOf": [
+                        { "$ref": "#/components/schemas/TeacherItem" },
+                        {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/TeacherItem"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Admin"],
+        "summary": "Create or update teacher",
+        "security": [{ "bearerAuth": [] }, { "tokenQuery": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "enseignant_id": { "type": "integer", "minimum": 1 },
+                  "nom": { "type": "string" },
+                  "prenom": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string" },
+                  "specialite": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated" },
+          "201": { "description": "Created" }
+        }
+      }
+    },
+    "/admin/etudiants.php": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "List students or get one student",
+        "security": [{ "bearerAuth": [] }, { "tokenQuery": [] }],
+        "parameters": [
+          {
+            "name": "etudiant_id",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1 }
+          },
+          {
+            "name": "classe_id",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Students response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "oneOf": [
+                        { "$ref": "#/components/schemas/StudentItem" },
+                        {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/StudentItem"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Admin"],
+        "summary": "Create or update student",
+        "security": [{ "bearerAuth": [] }, { "tokenQuery": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "etudiant_id": { "type": "integer", "minimum": 1 },
+                  "nom": { "type": "string" },
+                  "prenom": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string" },
+                  "classe_id": { "type": "integer", "minimum": 1 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated" },
+          "201": { "description": "Created" }
+        }
+      }
+    },
+    "/admin/seances.php": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "List sessions",
+        "security": [{ "bearerAuth": [] }, { "tokenQuery": [] }],
+        "parameters": [
+          {
+            "name": "enseignant_id",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 1 }
+          },
+          {
+            "name": "classe_id",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 1 }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "schema": { "type": "string", "format": "date" }
+          },
+          {
+            "name": "date_seance",
+            "in": "query",
+            "schema": { "type": "string", "format": "date" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/SessionItem" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Admin"],
+        "summary": "Create or update session",
+        "security": [{ "bearerAuth": [] }, { "tokenQuery": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "seance_id": { "type": "integer", "minimum": 1 },
+                  "enseignant_id": { "type": "integer", "minimum": 1 },
+                  "classe_id": { "type": "integer", "minimum": 1 },
+                  "matiere_id": { "type": "integer", "minimum": 1 },
+                  "date_seance": { "type": "string", "format": "date" },
+                  "heure_debut": { "type": "string", "example": "09:00" },
+                  "heure_fin": { "type": "string", "example": "10:30" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated" },
+          "201": { "description": "Created" }
+        }
+      }
+    },
+    "/enseignant/seances.php": {
+      "get": {
+        "tags": ["Enseignant"],
+        "summary": "List sessions of one teacher",
+        "parameters": [
+          {
+            "name": "enseignant_id",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1 }
+          },
+          {
+            "name": "utilisateur_id",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1 }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date" }
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Teacher sessions" },
+          "400": { "description": "Bad request" }
+        }
+      }
+    },
+    "/enseignant/absences.php": {
+      "get": {
+        "tags": ["Enseignant"],
+        "summary": "Get attendance list for one session",
+        "parameters": [
+          {
+            "name": "enseignant_id",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1 }
+          },
+          {
+            "name": "seance_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "integer", "minimum": 1 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Attendance list" },
+          "403": { "description": "Not session owner" }
+        }
+      },
+      "post": {
+        "tags": ["Enseignant"],
+        "summary": "Save attendance",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["seance_id", "absences"],
+                "properties": {
+                  "enseignant_id": { "type": "integer", "minimum": 1 },
+                  "seance_id": { "type": "integer", "minimum": 1 },
+                  "absences": {
+                    "type": "array",
+                    "items": { "$ref": "#/components/schemas/AbsenceEntry" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Attendance saved" },
+          "400": { "description": "Invalid payload" },
+          "403": { "description": "Not session owner" }
+        }
+      }
+    },
+    "/etudiant/profil.php": {
+      "get": {
+        "tags": ["Etudiant"],
+        "summary": "Get student profile",
+        "parameters": [
+          {
+            "name": "etudiant_id",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1 }
+          },
+          {
+            "name": "utilisateur_id",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1 }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Student profile" },
+          "404": { "description": "Student not found" }
+        }
+      }
+    },
+    "/etudiant/absences.php": {
+      "get": {
+        "tags": ["Etudiant"],
+        "summary": "List student absences",
+        "parameters": [
+          {
+            "name": "etudiant_id",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1 }
+          },
+          {
+            "name": "utilisateur_id",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1 }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date" }
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date" }
+          },
+          {
+            "name": "matiere_id",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Absence list" }
+        }
+      }
+    }
+  }
+}
