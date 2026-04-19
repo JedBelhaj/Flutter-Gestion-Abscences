@@ -66,16 +66,16 @@ class _SeancesScreenState extends State<SeancesScreen> {
         return;
       }
       _reload();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Seance supprimee')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Seance supprimee')));
     } catch (e) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
     }
   }
 
@@ -128,7 +128,7 @@ class _SeancesScreenState extends State<SeancesScreen> {
                           border: OutlineInputBorder(),
                         ),
                         items: enseignants.map((item) {
-                          final enseignant = item as Map<String, dynamic>;
+                          final enseignant = item;
                           return DropdownMenuItem<int>(
                             value: (enseignant['enseignant_id'] as num).toInt(),
                             child: Text(
@@ -156,7 +156,7 @@ class _SeancesScreenState extends State<SeancesScreen> {
                           border: OutlineInputBorder(),
                         ),
                         items: classes.map((item) {
-                          final classe = item as Map<String, dynamic>;
+                          final classe = item;
                           return DropdownMenuItem<int>(
                             value: (classe['id'] as num).toInt(),
                             child: Text((classe['nom'] ?? '').toString()),
@@ -182,7 +182,7 @@ class _SeancesScreenState extends State<SeancesScreen> {
                           border: OutlineInputBorder(),
                         ),
                         items: matieres.map((item) {
-                          final matiere = item as Map<String, dynamic>;
+                          final matiere = item;
                           return DropdownMenuItem<int>(
                             value: (matiere['id'] as num).toInt(),
                             child: Text((matiere['nom'] ?? '').toString()),
@@ -245,7 +245,9 @@ class _SeancesScreenState extends State<SeancesScreen> {
                             return;
                           }
                           setDialogState(() {
-                            heureDebutController.text = _formatTime(selectedTime);
+                            heureDebutController.text = _formatTime(
+                              selectedTime,
+                            );
                           });
                         },
                         validator: (value) {
@@ -321,9 +323,9 @@ class _SeancesScreenState extends State<SeancesScreen> {
                   if (!mounted) {
                     return;
                   }
-                  ScaffoldMessenger.of(this.context).showSnackBar(
-                    SnackBar(content: Text('Erreur: $e')),
-                  );
+                  ScaffoldMessenger.of(
+                    this.context,
+                  ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
                 }
               },
               child: const Text('Affecter'),
@@ -353,7 +355,10 @@ class _SeancesScreenState extends State<SeancesScreen> {
             return const Center(child: Text('Aucune seance trouvee'));
           }
 
-          final filteredSeances = _controller.filterSeances(seances, _searchQuery);
+          final filteredSeances = _controller.filterSeances(
+            seances,
+            _searchQuery,
+          );
 
           return Column(
             children: [
@@ -390,7 +395,10 @@ class _SeancesScreenState extends State<SeancesScreen> {
                                 '${seance.enseignantNom} ${seance.enseignantPrenom} | ${seance.dateSeance} ${seance.heureDebut}',
                               ),
                               trailing: IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
                                 onPressed: () => _confirmDeleteSeance(seance),
                               ),
                             );

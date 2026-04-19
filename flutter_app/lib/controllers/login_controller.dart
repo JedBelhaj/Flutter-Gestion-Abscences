@@ -8,4 +8,8 @@ class LoginController {
   Future<void> login({required String email, required String password}) async {
     await _api.login(email: email, password: password);
   }
+
+  Future<String?> currentUserRole() async {
+    return _api.getCurrentUserRole();
+  }
 }

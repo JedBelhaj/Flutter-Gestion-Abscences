@@ -60,23 +60,25 @@ class _EtudiantsScreenState extends State<EtudiantsScreen> {
         return;
       }
       _reload();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Etudiant supprime')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Etudiant supprime')));
     } catch (e) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
     }
   }
 
   Future<void> _showStudentForm({Etudiant? etudiant}) async {
     final isEdit = etudiant != null;
     final nomController = TextEditingController(text: etudiant?.nom ?? '');
-    final prenomController = TextEditingController(text: etudiant?.prenom ?? '');
+    final prenomController = TextEditingController(
+      text: etudiant?.prenom ?? '',
+    );
     final emailController = TextEditingController(text: etudiant?.email ?? '');
     final passwordController = TextEditingController();
     int? selectedClasseId = etudiant?.classeId;
@@ -105,7 +107,8 @@ class _EtudiantsScreenState extends State<EtudiantsScreen> {
                         controller: nomController,
                         decoration: const InputDecoration(labelText: 'Nom'),
                         validator: (value) {
-                          if (!isEdit && (value == null || value.trim().isEmpty)) {
+                          if (!isEdit &&
+                              (value == null || value.trim().isEmpty)) {
                             return 'Nom obligatoire';
                           }
                           return null;
@@ -115,7 +118,8 @@ class _EtudiantsScreenState extends State<EtudiantsScreen> {
                         controller: prenomController,
                         decoration: const InputDecoration(labelText: 'Prenom'),
                         validator: (value) {
-                          if (!isEdit && (value == null || value.trim().isEmpty)) {
+                          if (!isEdit &&
+                              (value == null || value.trim().isEmpty)) {
                             return 'Prenom obligatoire';
                           }
                           return null;
@@ -125,7 +129,8 @@ class _EtudiantsScreenState extends State<EtudiantsScreen> {
                         controller: emailController,
                         decoration: const InputDecoration(labelText: 'Email'),
                         validator: (value) {
-                          if (!isEdit && (value == null || value.trim().isEmpty)) {
+                          if (!isEdit &&
+                              (value == null || value.trim().isEmpty)) {
                             return 'Email obligatoire';
                           }
                           return null;
@@ -133,10 +138,13 @@ class _EtudiantsScreenState extends State<EtudiantsScreen> {
                       ),
                       TextFormField(
                         controller: passwordController,
-                        decoration: const InputDecoration(labelText: 'Mot de passe'),
+                        decoration: const InputDecoration(
+                          labelText: 'Mot de passe',
+                        ),
                         obscureText: true,
                         validator: (value) {
-                          if (!isEdit && (value == null || value.trim().isEmpty)) {
+                          if (!isEdit &&
+                              (value == null || value.trim().isEmpty)) {
                             return 'Mot de passe obligatoire';
                           }
                           return null;
@@ -150,7 +158,7 @@ class _EtudiantsScreenState extends State<EtudiantsScreen> {
                           border: OutlineInputBorder(),
                         ),
                         items: classes.map((item) {
-                          final classe = item as Map<String, dynamic>;
+                          final classe = item;
                           return DropdownMenuItem<int>(
                             value: (classe['id'] as num).toInt(),
                             child: Text((classe['nom'] ?? '').toString()),
@@ -188,7 +196,7 @@ class _EtudiantsScreenState extends State<EtudiantsScreen> {
                 try {
                   if (isEdit) {
                     await _controller.updateEtudiant(
-                      etudiantId: etudiant!.id,
+                      etudiantId: etudiant.id,
                       nom: nomController.text.trim(),
                       prenom: prenomController.text.trim(),
                       email: emailController.text.trim(),
@@ -214,9 +222,9 @@ class _EtudiantsScreenState extends State<EtudiantsScreen> {
                   if (!mounted) {
                     return;
                   }
-                  ScaffoldMessenger.of(this.context).showSnackBar(
-                    SnackBar(content: Text('Erreur: $e')),
-                  );
+                  ScaffoldMessenger.of(
+                    this.context,
+                  ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
                 }
               },
               child: Text(isEdit ? 'Modifier' : 'Ajouter'),
@@ -279,15 +287,15 @@ class _EtudiantsScreenState extends State<EtudiantsScreen> {
                             final etudiant = filteredEtudiants[index];
                             return ListTile(
                               leading: const Icon(Icons.school),
-                              title: Text(
-                                '${etudiant.nom} ${etudiant.prenom}',
-                              ),
-                              subtitle: Text(
-                                'Classe: ${etudiant.classeNom}',
-                              ),
+                              title: Text('${etudiant.nom} ${etudiant.prenom}'),
+                              subtitle: Text('Classe: ${etudiant.classeNom}'),
                               trailing: IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () => _confirmDeleteStudent(etudiant),
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () =>
+                                    _confirmDeleteStudent(etudiant),
                               ),
                               onTap: () => _showStudentForm(etudiant: etudiant),
                             );
@@ -300,6 +308,7 @@ class _EtudiantsScreenState extends State<EtudiantsScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_etudiants',
         onPressed: () => _showStudentForm(),
         child: const Icon(Icons.add),
       ),

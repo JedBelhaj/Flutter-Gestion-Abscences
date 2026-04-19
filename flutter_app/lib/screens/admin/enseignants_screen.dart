@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/controllers/enseignants_controller.dart';
-import 'package:flutter_app/models/enseignant.dart';
+import 'package:flutter_app/models/utilisateur.dart';
 
 class EnseignantsScreen extends StatefulWidget {
   const EnseignantsScreen({super.key});
@@ -11,7 +11,7 @@ class EnseignantsScreen extends StatefulWidget {
 
 class _EnseignantsScreenState extends State<EnseignantsScreen> {
   final EnseignantsController _controller = EnseignantsController();
-  late Future<List<Enseignant>> _enseignantsFuture;
+  late Future<List<Utilisateur>> _enseignantsFuture;
   String _searchQuery = '';
 
   @override
@@ -26,7 +26,7 @@ class _EnseignantsScreenState extends State<EnseignantsScreen> {
     });
   }
 
-  Future<void> _confirmDeleteTeacher(Enseignant enseignant) async {
+  Future<void> _confirmDeleteTeacher(Utilisateur enseignant) async {
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -57,24 +57,28 @@ class _EnseignantsScreenState extends State<EnseignantsScreen> {
         return;
       }
       _reload();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enseignant supprime')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Enseignant supprime')));
     } catch (e) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
     }
   }
 
-  Future<void> _showTeacherForm({Enseignant? enseignant}) async {
+  Future<void> _showTeacherForm({Utilisateur? enseignant}) async {
     final isEdit = enseignant != null;
     final nomController = TextEditingController(text: enseignant?.nom ?? '');
-    final prenomController = TextEditingController(text: enseignant?.prenom ?? '');
-    final emailController = TextEditingController(text: enseignant?.email ?? '');
+    final prenomController = TextEditingController(
+      text: enseignant?.prenom ?? '',
+    );
+    final emailController = TextEditingController(
+      text: enseignant?.email ?? '',
+    );
     final passwordController = TextEditingController();
     final specialiteController = TextEditingController(
       text: enseignant?.specialite ?? '',
@@ -124,7 +128,9 @@ class _EnseignantsScreenState extends State<EnseignantsScreen> {
                   ),
                   TextFormField(
                     controller: passwordController,
-                    decoration: const InputDecoration(labelText: 'Mot de passe'),
+                    decoration: const InputDecoration(
+                      labelText: 'Mot de passe',
+                    ),
                     obscureText: true,
                     validator: (value) {
                       if (!isEdit && (value == null || value.trim().isEmpty)) {
@@ -155,7 +161,7 @@ class _EnseignantsScreenState extends State<EnseignantsScreen> {
                 try {
                   if (isEdit) {
                     await _controller.updateEnseignant(
-                      enseignantId: enseignant!.id,
+                      enseignantId: enseignant.id,
                       nom: nomController.text.trim(),
                       prenom: prenomController.text.trim(),
                       email: emailController.text.trim(),
@@ -181,9 +187,9 @@ class _EnseignantsScreenState extends State<EnseignantsScreen> {
                   if (!mounted) {
                     return;
                   }
-                  ScaffoldMessenger.of(this.context).showSnackBar(
-                    SnackBar(content: Text('Erreur: $e')),
-                  );
+                  ScaffoldMessenger.of(
+                    this.context,
+                  ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
                 }
               },
               child: Text(isEdit ? 'Modifier' : 'Ajouter'),
@@ -197,7 +203,7 @@ class _EnseignantsScreenState extends State<EnseignantsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FutureBuilder<List<Enseignant>>(
+      body: FutureBuilder<List<Utilisateur>>(
         future: _enseignantsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -253,10 +259,15 @@ class _EnseignantsScreenState extends State<EnseignantsScreen> {
                                 'Specialite: ${enseignant.specialite}',
                               ),
                               trailing: IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () => _confirmDeleteTeacher(enseignant),
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () =>
+                                    _confirmDeleteTeacher(enseignant),
                               ),
-                              onTap: () => _showTeacherForm(enseignant: enseignant),
+                              onTap: () =>
+                                  _showTeacherForm(enseignant: enseignant),
                             );
                           },
                         ),
@@ -267,6 +278,7 @@ class _EnseignantsScreenState extends State<EnseignantsScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_enseignants',
         onPressed: () => _showTeacherForm(),
         child: const Icon(Icons.add),
       ),

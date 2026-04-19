@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/controllers/login_controller.dart';
 import 'package:flutter_app/screens/admin/admin_home.dart';
+import 'package:flutter_app/screens/enseignant/enseignant_home.dart';
+import 'package:flutter_app/screens/etudiant/etudiant_home.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,7 +30,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email et mot de passe sont obligatoires')),
+        const SnackBar(
+          content: Text('Email et mot de passe sont obligatoires'),
+        ),
       );
       return;
     }
@@ -39,20 +43,30 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       await _controller.login(email: email, password: password);
+      final role = await _controller.currentUserRole();
+
       if (!mounted) {
         return;
       }
+
+      final Widget destination = switch (role) {
+        'admin' => const AdminHome(),
+        'enseignant' => const EnseignantHome(),
+        'etudiant' => const EtudiantHome(),
+        _ => const AdminHome(),
+      };
+
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const AdminHome()),
+        MaterialPageRoute(builder: (_) => destination),
       );
     } catch (e) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
     } finally {
       if (mounted) {
         setState(() {

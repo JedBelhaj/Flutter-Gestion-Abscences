@@ -1,16 +1,17 @@
-import 'package:flutter_app/models/enseignant.dart';
+import 'package:flutter_app/models/utilisateur.dart';
 import 'package:flutter_app/services/api_service.dart';
 
 class EnseignantsController {
   final ApiService _api;
 
-  EnseignantsController({ApiService? apiService}) : _api = apiService ?? ApiService();
+  EnseignantsController({ApiService? apiService})
+    : _api = apiService ?? ApiService();
 
-  Future<List<Enseignant>> fetchEnseignants() async {
+  Future<List<Utilisateur>> fetchEnseignants() async {
     final rows = await _api.getEnseignants();
     return rows
         .whereType<Map<String, dynamic>>()
-        .map(Enseignant.fromJson)
+        .map(Utilisateur.fromJson)
         .toList();
   }
 
@@ -52,7 +53,7 @@ class EnseignantsController {
     await _api.deleteEnseignant(enseignantId: enseignantId);
   }
 
-  List<Enseignant> filterEnseignants(List<Enseignant> items, String query) {
+  List<Utilisateur> filterEnseignants(List<Utilisateur> items, String query) {
     final normalizedQuery = query.trim().toLowerCase();
     if (normalizedQuery.isEmpty) {
       return items;
