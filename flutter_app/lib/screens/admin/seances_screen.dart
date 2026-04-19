@@ -411,6 +411,7 @@ class _SeancesScreenState extends State<SeancesScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_seances',
         onPressed: _showAssignForm,
         child: const Icon(Icons.add),
       ),

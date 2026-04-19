@@ -56,16 +56,16 @@ class _ClassesScreenState extends State<ClassesScreen> {
         return;
       }
       _reload();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Classe supprimee')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Classe supprimee')));
     } catch (e) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
     }
   }
 
@@ -126,9 +126,9 @@ class _ClassesScreenState extends State<ClassesScreen> {
                   if (!mounted) {
                     return;
                   }
-                  ScaffoldMessenger.of(this.context).showSnackBar(
-                    SnackBar(content: Text('Erreur: $e')),
-                  );
+                  ScaffoldMessenger.of(
+                    this.context,
+                  ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
                 }
               },
               child: const Text('Ajouter'),
@@ -158,7 +158,10 @@ class _ClassesScreenState extends State<ClassesScreen> {
             return const Center(child: Text('Aucune classe trouvee'));
           }
 
-          final filteredClasses = _controller.filterClasses(classes, _searchQuery);
+          final filteredClasses = _controller.filterClasses(
+            classes,
+            _searchQuery,
+          );
 
           return Column(
             children: [
@@ -193,7 +196,10 @@ class _ClassesScreenState extends State<ClassesScreen> {
                                 'Niveau: ${(classe['niveau'] ?? '').toString()}',
                               ),
                               trailing: IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
                                 onPressed: () => _confirmDeleteClasse(classe),
                               ),
                             );
@@ -206,6 +212,7 @@ class _ClassesScreenState extends State<ClassesScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_classes',
         onPressed: _showAddClassForm,
         child: const Icon(Icons.add),
       ),
