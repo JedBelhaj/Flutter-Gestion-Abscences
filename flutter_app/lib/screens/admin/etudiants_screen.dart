@@ -82,11 +82,27 @@ class _EtudiantsScreenState extends State<EtudiantsScreen> {
     final emailController = TextEditingController(text: etudiant?.email ?? '');
     final passwordController = TextEditingController();
     int? selectedClasseId = etudiant?.classeId;
+    bool isPasswordVisible = false;
     final formKey = GlobalKey<FormState>();
 
     final classes = await _classesFuture;
+    final classIds = classes
+        .map((item) => (item['id'] as num?)?.toInt())
+        .whereType<int>()
+        .toSet();
+
+    if (selectedClasseId != null && !classIds.contains(selectedClasseId)) {
+      selectedClasseId = null;
+    }
 
     if (!mounted) {
+      return;
+    }
+
+    if (!isEdit && classIds.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Aucune classe disponible')));
       return;
     }
 
@@ -137,11 +153,26 @@ class _EtudiantsScreenState extends State<EtudiantsScreen> {
                         },
                       ),
                       TextFormField(
+                        key: ValueKey('student_password_$isPasswordVisible'),
                         controller: passwordController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Mot de passe',
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              setDialogState(() {
+                                isPasswordVisible = !isPasswordVisible;
+                              });
+                            },
+                            icon: Icon(
+                              isPasswordVisible
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                          ),
                         ),
-                        obscureText: true,
+                        obscureText: !isPasswordVisible,
+                        enableSuggestions: false,
+                        autocorrect: false,
                         validator: (value) {
                           if (!isEdit &&
                               (value == null || value.trim().isEmpty)) {

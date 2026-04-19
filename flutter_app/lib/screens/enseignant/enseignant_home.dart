@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/controllers/admin_home_controller.dart';
 import 'package:flutter_app/screens/enseignant/mes_seances_screen.dart';
 import 'package:flutter_app/screens/login_screen.dart';
+import 'package:flutter_app/services/theme_service.dart';
 
 class EnseignantHome extends StatefulWidget {
   const EnseignantHome({super.key});
@@ -63,6 +64,18 @@ class _EnseignantHomeState extends State<EnseignantHome> {
       appBar: AppBar(
         title: const Text('Enseignant - Mes seances'),
         actions: [
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: ThemeService.instance.modeNotifier,
+            builder: (context, mode, _) {
+              return IconButton(
+                onPressed: ThemeService.instance.toggleThemeMode,
+                icon: Icon(
+                  mode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
+                ),
+                tooltip: 'Theme',
+              );
+            },
+          ),
           IconButton(
             onPressed: _confirmLogout,
             icon: const Icon(Icons.logout),

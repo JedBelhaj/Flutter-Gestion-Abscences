@@ -84,6 +84,7 @@ class _EnseignantsScreenState extends State<EnseignantsScreen> {
       text: enseignant?.specialite ?? '',
     );
     final formKey = GlobalKey<FormState>();
+    bool isPasswordVisible = false;
 
     await showDialog<void>(
       context: context,
@@ -93,57 +94,82 @@ class _EnseignantsScreenState extends State<EnseignantsScreen> {
           content: SingleChildScrollView(
             child: Form(
               key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: nomController,
-                    decoration: const InputDecoration(labelText: 'Nom'),
-                    validator: (value) {
-                      if (!isEdit && (value == null || value.trim().isEmpty)) {
-                        return 'Nom obligatoire';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: prenomController,
-                    decoration: const InputDecoration(labelText: 'Prenom'),
-                    validator: (value) {
-                      if (!isEdit && (value == null || value.trim().isEmpty)) {
-                        return 'Prenom obligatoire';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: emailController,
-                    decoration: const InputDecoration(labelText: 'Email'),
-                    validator: (value) {
-                      if (!isEdit && (value == null || value.trim().isEmpty)) {
-                        return 'Email obligatoire';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: passwordController,
-                    decoration: const InputDecoration(
-                      labelText: 'Mot de passe',
-                    ),
-                    obscureText: true,
-                    validator: (value) {
-                      if (!isEdit && (value == null || value.trim().isEmpty)) {
-                        return 'Mot de passe obligatoire';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: specialiteController,
-                    decoration: const InputDecoration(labelText: 'Specialite'),
-                  ),
-                ],
+              child: StatefulBuilder(
+                builder: (context, setDialogState) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: nomController,
+                        decoration: const InputDecoration(labelText: 'Nom'),
+                        validator: (value) {
+                          if (!isEdit &&
+                              (value == null || value.trim().isEmpty)) {
+                            return 'Nom obligatoire';
+                          }
+                          return null;
+                        },
+                      ),
+                      TextFormField(
+                        controller: prenomController,
+                        decoration: const InputDecoration(labelText: 'Prenom'),
+                        validator: (value) {
+                          if (!isEdit &&
+                              (value == null || value.trim().isEmpty)) {
+                            return 'Prenom obligatoire';
+                          }
+                          return null;
+                        },
+                      ),
+                      TextFormField(
+                        controller: emailController,
+                        decoration: const InputDecoration(labelText: 'Email'),
+                        validator: (value) {
+                          if (!isEdit &&
+                              (value == null || value.trim().isEmpty)) {
+                            return 'Email obligatoire';
+                          }
+                          return null;
+                        },
+                      ),
+                      TextFormField(
+                        key: ValueKey('teacher_password_$isPasswordVisible'),
+                        controller: passwordController,
+                        decoration: InputDecoration(
+                          labelText: 'Mot de passe',
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              setDialogState(() {
+                                isPasswordVisible = !isPasswordVisible;
+                              });
+                            },
+                            icon: Icon(
+                              isPasswordVisible
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                          ),
+                        ),
+                        obscureText: !isPasswordVisible,
+                        enableSuggestions: false,
+                        autocorrect: false,
+                        validator: (value) {
+                          if (!isEdit &&
+                              (value == null || value.trim().isEmpty)) {
+                            return 'Mot de passe obligatoire';
+                          }
+                          return null;
+                        },
+                      ),
+                      TextFormField(
+                        controller: specialiteController,
+                        decoration: const InputDecoration(
+                          labelText: 'Specialite',
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ),

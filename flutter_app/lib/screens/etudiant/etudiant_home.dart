@@ -3,6 +3,7 @@ import 'package:flutter_app/controllers/admin_home_controller.dart';
 import 'package:flutter_app/screens/etudiant/absences_screen.dart';
 import 'package:flutter_app/screens/etudiant/profil_screen.dart';
 import 'package:flutter_app/screens/login_screen.dart';
+import 'package:flutter_app/services/theme_service.dart';
 
 class EtudiantHome extends StatefulWidget {
   const EtudiantHome({super.key});
@@ -69,6 +70,18 @@ class _EtudiantHomeState extends State<EtudiantHome> {
       appBar: AppBar(
         title: Text('Etudiant - ${_titles[_currentIndex]}'),
         actions: [
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: ThemeService.instance.modeNotifier,
+            builder: (context, mode, _) {
+              return IconButton(
+                onPressed: ThemeService.instance.toggleThemeMode,
+                icon: Icon(
+                  mode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
+                ),
+                tooltip: 'Theme',
+              );
+            },
+          ),
           IconButton(
             onPressed: _confirmLogout,
             icon: const Icon(Icons.logout),

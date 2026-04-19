@@ -11,6 +11,8 @@ dependencies:
     sdk: flutter
   http: ^1.2.0 # appels API REST
   shared_preferences: ^2.2.2 # sauvegarde session utilisateur
+  pdf: ^3.11.3
+  printing: ^5.14.2
 
 dev_dependencies:
   flutter_test:

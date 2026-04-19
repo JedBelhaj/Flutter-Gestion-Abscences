@@ -5,6 +5,7 @@ import 'package:flutter_app/screens/admin/classes_screen.dart';
 import 'package:flutter_app/screens/admin/enseignants_screen.dart';
 import 'package:flutter_app/screens/admin/etudiants_screen.dart';
 import 'package:flutter_app/screens/admin/seances_screen.dart';
+import 'package:flutter_app/services/theme_service.dart';
 
 class AdminHome extends StatefulWidget {
   const AdminHome({super.key});
@@ -69,9 +70,9 @@ class _AdminHomeState extends State<AdminHome> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur logout: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erreur logout: $e')));
     }
   }
 
@@ -81,6 +82,18 @@ class _AdminHomeState extends State<AdminHome> {
       appBar: AppBar(
         title: Text('Admin - ${_titles[_currentIndex]}'),
         actions: [
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: ThemeService.instance.modeNotifier,
+            builder: (context, mode, _) {
+              return IconButton(
+                onPressed: ThemeService.instance.toggleThemeMode,
+                icon: Icon(
+                  mode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
+                ),
+                tooltip: 'Theme',
+              );
+            },
+          ),
           IconButton(
             onPressed: _confirmLogout,
             icon: const Icon(Icons.logout),
@@ -98,19 +111,13 @@ class _AdminHomeState extends State<AdminHome> {
           });
         },
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.school),
-            label: 'Etudiants',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Etudiants'),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Enseignants',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.class_), label: 'Classes'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.schedule),
-            label: 'Seances',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.schedule), label: 'Seances'),
         ],
       ),
     );

@@ -4,6 +4,7 @@ import 'package:flutter_app/screens/enseignant/enseignant_home.dart';
 import 'package:flutter_app/screens/etudiant/etudiant_home.dart';
 import 'package:flutter_app/screens/login_screen.dart';
 import 'package:flutter_app/services/api_service.dart';
+import 'package:flutter_app/services/theme_service.dart';
 
 void main() {
   runApp(const MainApp());
@@ -18,11 +19,13 @@ class MainApp extends StatefulWidget {
 
 class _MainAppState extends State<MainApp> {
   final ApiService _apiService = ApiService();
+  final ThemeService _themeService = ThemeService.instance;
   late Future<Widget> _initialScreenFuture;
 
   @override
   void initState() {
     super.initState();
+    _themeService.loadThemeMode();
     _initialScreenFuture = _resolveInitialScreen();
   }
 
@@ -54,32 +57,55 @@ class _MainAppState extends State<MainApp> {
       ),
     );
 
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.indigo,
-        elevatedButtonTheme: ElevatedButtonThemeData(style: largeButtonStyle),
-        filledButtonTheme: FilledButtonThemeData(style: largeButtonStyle),
-        outlinedButtonTheme: OutlinedButtonThemeData(style: largeButtonStyle),
-        textButtonTheme: TextButtonThemeData(style: largeButtonStyle),
-      ),
-      home: FutureBuilder<Widget>(
-        future: _initialScreenFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: _themeService.modeNotifier,
+      builder: (context, themeMode, _) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          themeMode: themeMode,
+          theme: ThemeData(
+            useMaterial3: true,
+            colorSchemeSeed: Colors.indigo,
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: largeButtonStyle,
+            ),
+            filledButtonTheme: FilledButtonThemeData(style: largeButtonStyle),
+            outlinedButtonTheme: OutlinedButtonThemeData(
+              style: largeButtonStyle,
+            ),
+            textButtonTheme: TextButtonThemeData(style: largeButtonStyle),
+          ),
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            brightness: Brightness.dark,
+            colorSchemeSeed: Colors.indigo,
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: largeButtonStyle,
+            ),
+            filledButtonTheme: FilledButtonThemeData(style: largeButtonStyle),
+            outlinedButtonTheme: OutlinedButtonThemeData(
+              style: largeButtonStyle,
+            ),
+            textButtonTheme: TextButtonThemeData(style: largeButtonStyle),
+          ),
+          home: FutureBuilder<Widget>(
+            future: _initialScreenFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
 
-          if (snapshot.hasError) {
-            return const Scaffold(body: LoginScreen());
-          }
+              if (snapshot.hasError) {
+                return const LoginScreen();
+              }
 
-          return Scaffold(body: snapshot.data ?? const LoginScreen());
-        },
-      ),
+              return snapshot.data ?? const LoginScreen();
+            },
+          ),
+        );
+      },
     );
   }
 }

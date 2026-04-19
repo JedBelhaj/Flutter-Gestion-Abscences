@@ -3,6 +3,7 @@ import 'package:flutter_app/controllers/login_controller.dart';
 import 'package:flutter_app/screens/admin/admin_home.dart';
 import 'package:flutter_app/screens/enseignant/enseignant_home.dart';
 import 'package:flutter_app/screens/etudiant/etudiant_home.dart';
+import 'package:flutter_app/services/theme_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isPasswordVisible = false;
 
   @override
   void dispose() {
@@ -79,6 +81,22 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        actions: [
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: ThemeService.instance.modeNotifier,
+            builder: (context, mode, _) {
+              return IconButton(
+                onPressed: ThemeService.instance.toggleThemeMode,
+                icon: Icon(
+                  mode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
+                ),
+                tooltip: 'Theme',
+              );
+            },
+          ),
+        ],
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(40.0),
@@ -90,10 +108,27 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: _emailController,
                 decoration: const InputDecoration(labelText: 'Email'),
               ),
-              TextField(
+              TextFormField(
+                key: ValueKey('login_password_$_isPasswordVisible'),
                 controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Password'),
-                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                    icon: Icon(
+                      _isPasswordVisible
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
+                  ),
+                ),
+                obscureText: !_isPasswordVisible,
+                enableSuggestions: false,
+                autocorrect: false,
               ),
               const SizedBox(height: 16),
               ElevatedButton(
