@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/services/api_service.dart';
+import 'package:flutter_app/controllers/seances_controller.dart';
+import 'package:flutter_app/models/seance.dart';
 
 class SeancesScreen extends StatefulWidget {
   const SeancesScreen({super.key});
@@ -9,32 +10,32 @@ class SeancesScreen extends StatefulWidget {
 }
 
 class _SeancesScreenState extends State<SeancesScreen> {
-  final ApiService _api = ApiService();
-  late Future<List<dynamic>> _seancesFuture;
-  late Future<List<dynamic>> _enseignantsFuture;
-  late Future<List<dynamic>> _classesFuture;
-  late Future<List<dynamic>> _matieresFuture;
+  final SeancesController _controller = SeancesController();
+  late Future<List<Seance>> _seancesFuture;
+  late Future<List<Map<String, dynamic>>> _enseignantsFuture;
+  late Future<List<Map<String, dynamic>>> _classesFuture;
+  late Future<List<Map<String, dynamic>>> _matieresFuture;
   String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    _seancesFuture = _api.getSeances();
-    _enseignantsFuture = _api.getEnseignants();
-    _classesFuture = _api.getClasses();
-    _matieresFuture = _api.getMatieres();
+    _seancesFuture = _controller.fetchSeances();
+    _enseignantsFuture = _controller.fetchEnseignants();
+    _classesFuture = _controller.fetchClasses();
+    _matieresFuture = _controller.fetchMatieres();
   }
 
   void _reload() {
     setState(() {
-      _seancesFuture = _api.getSeances();
-      _enseignantsFuture = _api.getEnseignants();
-      _classesFuture = _api.getClasses();
-      _matieresFuture = _api.getMatieres();
+      _seancesFuture = _controller.fetchSeances();
+      _enseignantsFuture = _controller.fetchEnseignants();
+      _classesFuture = _controller.fetchClasses();
+      _matieresFuture = _controller.fetchMatieres();
     });
   }
 
-  Future<void> _confirmDeleteSeance(Map<String, dynamic> seance) async {
+  Future<void> _confirmDeleteSeance(Seance seance) async {
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -60,7 +61,7 @@ class _SeancesScreenState extends State<SeancesScreen> {
     }
 
     try {
-      await _api.deleteSeance(seanceId: (seance['id'] as num).toInt());
+      await _controller.deleteSeance(seance.id);
       if (!mounted) {
         return;
       }
@@ -298,13 +299,17 @@ class _SeancesScreenState extends State<SeancesScreen> {
                 }
 
                 try {
-                  await _api.addSeance(
+                  await _controller.addSeance(
                     enseignantId: selectedEnseignantId!,
                     classeId: selectedClasseId!,
                     matiereId: selectedMatiereId!,
                     dateSeance: dateController.text.trim(),
-                    heureDebut: dateTimeToApiTime(heureDebutController.text.trim()),
-                    heureFin: dateTimeToApiTime(heureFinController.text.trim()),
+                    heureDebut: _controller.dateTimeToApiTime(
+                      heureDebutController.text.trim(),
+                    ),
+                    heureFin: _controller.dateTimeToApiTime(
+                      heureFinController.text.trim(),
+                    ),
                   );
 
                   if (!mounted) {
@@ -329,14 +334,10 @@ class _SeancesScreenState extends State<SeancesScreen> {
     );
   }
 
-  String dateTimeToApiTime(String value) {
-    return value.length == 5 ? '$value:00' : value;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FutureBuilder<List<dynamic>>(
+      body: FutureBuilder<List<Seance>>(
         future: _seancesFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -352,20 +353,7 @@ class _SeancesScreenState extends State<SeancesScreen> {
             return const Center(child: Text('Aucune seance trouvee'));
           }
 
-          final normalizedQuery = _searchQuery.trim().toLowerCase();
-          final filteredSeances = seances.where((item) {
-            final seance = item as Map<String, dynamic>;
-            final matiere = (seance['matiere_nom'] ?? '').toString().toLowerCase();
-            final classe = (seance['classe_nom'] ?? '').toString().toLowerCase();
-            final enseignant =
-                '${(seance['enseignant_nom'] ?? '').toString()} ${(seance['enseignant_prenom'] ?? '').toString()}'
-                    .toLowerCase();
-            final date = (seance['date_seance'] ?? '').toString().toLowerCase();
-            return matiere.contains(normalizedQuery) ||
-                classe.contains(normalizedQuery) ||
-                enseignant.contains(normalizedQuery) ||
-                date.contains(normalizedQuery);
-          }).toList();
+          final filteredSeances = _controller.filterSeances(seances, _searchQuery);
 
           return Column(
             children: [
@@ -392,15 +380,14 @@ class _SeancesScreenState extends State<SeancesScreen> {
                         child: ListView.builder(
                           itemCount: filteredSeances.length,
                           itemBuilder: (context, index) {
-                            final seance =
-                                filteredSeances[index] as Map<String, dynamic>;
+                            final seance = filteredSeances[index];
                             return ListTile(
                               leading: const Icon(Icons.schedule),
                               title: Text(
-                                '${(seance['matiere_nom'] ?? '').toString()} - ${(seance['classe_nom'] ?? '').toString()}',
+                                '${seance.matiereNom} - ${seance.classeNom}',
                               ),
                               subtitle: Text(
-                                '${(seance['enseignant_nom'] ?? '').toString()} ${(seance['enseignant_prenom'] ?? '').toString()} | ${(seance['date_seance'] ?? '').toString()} ${(seance['heure_debut'] ?? '').toString()}',
+                                '${seance.enseignantNom} ${seance.enseignantPrenom} | ${seance.dateSeance} ${seance.heureDebut}',
                               ),
                               trailing: IconButton(
                                 icon: const Icon(Icons.delete, color: Colors.red),

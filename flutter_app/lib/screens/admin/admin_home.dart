@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/controllers/admin_home_controller.dart';
 import 'package:flutter_app/screens/login_screen.dart';
 import 'package:flutter_app/screens/admin/classes_screen.dart';
 import 'package:flutter_app/screens/admin/enseignants_screen.dart';
 import 'package:flutter_app/screens/admin/etudiants_screen.dart';
 import 'package:flutter_app/screens/admin/seances_screen.dart';
-import 'package:flutter_app/services/api_service.dart';
 
 class AdminHome extends StatefulWidget {
   const AdminHome({super.key});
@@ -15,7 +15,7 @@ class AdminHome extends StatefulWidget {
 
 class _AdminHomeState extends State<AdminHome> {
   int _currentIndex = 0;
-  final ApiService _api = ApiService();
+  final AdminHomeController _controller = AdminHomeController();
 
   final List<Widget> _screens = const [
     EtudiantsScreen(),
@@ -57,7 +57,7 @@ class _AdminHomeState extends State<AdminHome> {
     }
 
     try {
-      await _api.logout();
+      await _controller.logout();
       if (!mounted) {
         return;
       }

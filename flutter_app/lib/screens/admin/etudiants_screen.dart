@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/services/api_service.dart';
+import 'package:flutter_app/controllers/etudiants_controller.dart';
+import 'package:flutter_app/models/etudiant.dart';
 
 class EtudiantsScreen extends StatefulWidget {
   const EtudiantsScreen({super.key});
@@ -9,26 +10,26 @@ class EtudiantsScreen extends StatefulWidget {
 }
 
 class _EtudiantsScreenState extends State<EtudiantsScreen> {
-  final ApiService _api = ApiService();
-  late Future<List<dynamic>> _etudiantsFuture;
-  late Future<List<dynamic>> _classesFuture;
+  final EtudiantsController _controller = EtudiantsController();
+  late Future<List<Etudiant>> _etudiantsFuture;
+  late Future<List<Map<String, dynamic>>> _classesFuture;
   String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    _etudiantsFuture = _api.getEtudiants();
-    _classesFuture = _api.getClasses();
+    _etudiantsFuture = _controller.fetchEtudiants();
+    _classesFuture = _controller.fetchClasses();
   }
 
   void _reload() {
     setState(() {
-      _etudiantsFuture = _api.getEtudiants();
-      _classesFuture = _api.getClasses();
+      _etudiantsFuture = _controller.fetchEtudiants();
+      _classesFuture = _controller.fetchClasses();
     });
   }
 
-  Future<void> _confirmDeleteStudent(Map<String, dynamic> etudiant) async {
+  Future<void> _confirmDeleteStudent(Etudiant etudiant) async {
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -54,9 +55,7 @@ class _EtudiantsScreenState extends State<EtudiantsScreen> {
     }
 
     try {
-      await _api.deleteEtudiant(
-        etudiantId: (etudiant['etudiant_id'] as num).toInt(),
-      );
+      await _controller.deleteEtudiant(etudiant.id);
       if (!mounted) {
         return;
       }
@@ -74,15 +73,13 @@ class _EtudiantsScreenState extends State<EtudiantsScreen> {
     }
   }
 
-  Future<void> _showStudentForm({Map<String, dynamic>? etudiant}) async {
+  Future<void> _showStudentForm({Etudiant? etudiant}) async {
     final isEdit = etudiant != null;
-    final nomController = TextEditingController(text: (etudiant?['nom'] ?? '').toString());
-    final prenomController = TextEditingController(text: (etudiant?['prenom'] ?? '').toString());
-    final emailController = TextEditingController(text: (etudiant?['email'] ?? '').toString());
+    final nomController = TextEditingController(text: etudiant?.nom ?? '');
+    final prenomController = TextEditingController(text: etudiant?.prenom ?? '');
+    final emailController = TextEditingController(text: etudiant?.email ?? '');
     final passwordController = TextEditingController();
-    int? selectedClasseId = etudiant != null
-        ? (etudiant['classe_id'] as num).toInt()
-        : null;
+    int? selectedClasseId = etudiant?.classeId;
     final formKey = GlobalKey<FormState>();
 
     final classes = await _classesFuture;
@@ -190,8 +187,8 @@ class _EtudiantsScreenState extends State<EtudiantsScreen> {
 
                 try {
                   if (isEdit) {
-                    await _api.updateEtudiant(
-                      etudiantId: (etudiant['etudiant_id'] as num).toInt(),
+                    await _controller.updateEtudiant(
+                      etudiantId: etudiant!.id,
                       nom: nomController.text.trim(),
                       prenom: prenomController.text.trim(),
                       email: emailController.text.trim(),
@@ -199,7 +196,7 @@ class _EtudiantsScreenState extends State<EtudiantsScreen> {
                       classeId: selectedClasseId,
                     );
                   } else {
-                    await _api.addEtudiant(
+                    await _controller.addEtudiant(
                       nom: nomController.text.trim(),
                       prenom: prenomController.text.trim(),
                       email: emailController.text.trim(),
@@ -233,7 +230,7 @@ class _EtudiantsScreenState extends State<EtudiantsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FutureBuilder<List<dynamic>>(
+      body: FutureBuilder<List<Etudiant>>(
         future: _etudiantsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -249,18 +246,10 @@ class _EtudiantsScreenState extends State<EtudiantsScreen> {
             return const Center(child: Text('Aucun etudiant trouve'));
           }
 
-          final normalizedQuery = _searchQuery.trim().toLowerCase();
-          final filteredEtudiants = etudiants.where((item) {
-            final etudiant = item as Map<String, dynamic>;
-            final fullName =
-                '${(etudiant['nom'] ?? '').toString()} ${(etudiant['prenom'] ?? '').toString()}'
-                    .toLowerCase();
-            final classe = (etudiant['classe_nom'] ?? '').toString().toLowerCase();
-            final email = (etudiant['email'] ?? '').toString().toLowerCase();
-            return fullName.contains(normalizedQuery) ||
-                classe.contains(normalizedQuery) ||
-                email.contains(normalizedQuery);
-          }).toList();
+          final filteredEtudiants = _controller.filterEtudiants(
+            etudiants,
+            _searchQuery,
+          );
 
           return Column(
             children: [
@@ -287,15 +276,14 @@ class _EtudiantsScreenState extends State<EtudiantsScreen> {
                         child: ListView.builder(
                           itemCount: filteredEtudiants.length,
                           itemBuilder: (context, index) {
-                            final etudiant =
-                                filteredEtudiants[index] as Map<String, dynamic>;
+                            final etudiant = filteredEtudiants[index];
                             return ListTile(
                               leading: const Icon(Icons.school),
                               title: Text(
-                                '${(etudiant['nom'] ?? '').toString()} ${(etudiant['prenom'] ?? '').toString()}',
+                                '${etudiant.nom} ${etudiant.prenom}',
                               ),
                               subtitle: Text(
-                                'Classe: ${(etudiant['classe_nom'] ?? '').toString()}',
+                                'Classe: ${etudiant.classeNom}',
                               ),
                               trailing: IconButton(
                                 icon: const Icon(Icons.delete, color: Colors.red),

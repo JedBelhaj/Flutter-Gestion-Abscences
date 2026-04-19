@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/services/api_service.dart';
+import 'package:flutter_app/controllers/classes_controller.dart';
 
 class ClassesScreen extends StatefulWidget {
   const ClassesScreen({super.key});
@@ -9,19 +9,19 @@ class ClassesScreen extends StatefulWidget {
 }
 
 class _ClassesScreenState extends State<ClassesScreen> {
-  final ApiService _api = ApiService();
-  late Future<List<dynamic>> _classesFuture;
+  final ClassesController _controller = ClassesController();
+  late Future<List<Map<String, dynamic>>> _classesFuture;
   String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    _classesFuture = _api.getClasses();
+    _classesFuture = _controller.fetchClasses();
   }
 
   void _reload() {
     setState(() {
-      _classesFuture = _api.getClasses();
+      _classesFuture = _controller.fetchClasses();
     });
   }
 
@@ -51,7 +51,7 @@ class _ClassesScreenState extends State<ClassesScreen> {
     }
 
     try {
-      await _api.deleteClasse(classeId: (classe['id'] as num).toInt());
+      await _controller.deleteClasse((classe['id'] as num).toInt());
       if (!mounted) {
         return;
       }
@@ -113,7 +113,7 @@ class _ClassesScreenState extends State<ClassesScreen> {
                 }
 
                 try {
-                  await _api.addClasse(
+                  await _controller.addClasse(
                     nom: nomController.text.trim(),
                     niveau: niveauController.text.trim(),
                   );
@@ -142,7 +142,7 @@ class _ClassesScreenState extends State<ClassesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FutureBuilder<List<dynamic>>(
+      body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _classesFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -158,13 +158,7 @@ class _ClassesScreenState extends State<ClassesScreen> {
             return const Center(child: Text('Aucune classe trouvee'));
           }
 
-          final normalizedQuery = _searchQuery.trim().toLowerCase();
-          final filteredClasses = classes.where((item) {
-            final classe = item as Map<String, dynamic>;
-            final nom = (classe['nom'] ?? '').toString().toLowerCase();
-            final niveau = (classe['niveau'] ?? '').toString().toLowerCase();
-            return nom.contains(normalizedQuery) || niveau.contains(normalizedQuery);
-          }).toList();
+          final filteredClasses = _controller.filterClasses(classes, _searchQuery);
 
           return Column(
             children: [
@@ -191,8 +185,7 @@ class _ClassesScreenState extends State<ClassesScreen> {
                         child: ListView.builder(
                           itemCount: filteredClasses.length,
                           itemBuilder: (context, index) {
-                            final classe =
-                                filteredClasses[index] as Map<String, dynamic>;
+                            final classe = filteredClasses[index];
                             return ListTile(
                               leading: const Icon(Icons.class_),
                               title: Text((classe['nom'] ?? '').toString()),

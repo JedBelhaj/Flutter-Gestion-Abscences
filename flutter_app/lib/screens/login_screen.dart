@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/controllers/login_controller.dart';
 import 'package:flutter_app/screens/admin/admin_home.dart';
-import 'package:flutter_app/services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -10,7 +10,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final ApiService _api = ApiService();
+  final LoginController _controller = LoginController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
@@ -38,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await _api.login(email: email, password: password);
+      await _controller.login(email: email, password: password);
       if (!mounted) {
         return;
       }
