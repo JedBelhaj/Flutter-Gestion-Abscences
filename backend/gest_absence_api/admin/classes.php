@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../config/database.php';
 
-apiCors(['GET', 'POST', 'OPTIONS']);
+apiCors(['GET', 'POST', 'DELETE', 'OPTIONS']);
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
 	respondJson(204, []);
@@ -57,8 +57,70 @@ if ($method === 'GET') {
 	respondJson(200, ['success' => true, 'data' => $rows]);
 }
 
-if ($method !== 'POST') {
+if (!in_array($method, ['POST', 'DELETE'], true)) {
 	respondJson(405, ['success' => false, 'message' => 'Method not allowed']);
+}
+
+if ($method === 'DELETE') {
+	$classeId = normalizeInt(requestInput('classe_id'));
+	if ($classeId === null) {
+		respondJson(400, ['success' => false, 'message' => 'classe_id is required']);
+	}
+
+	$existing = fetchClasseById($cnx, $classeId);
+	if ($existing === null) {
+		respondJson(404, ['success' => false, 'message' => 'Class not found']);
+	}
+
+	$stmtStudentCheck = mysqli_prepare($cnx, 'SELECT id FROM etudiants WHERE classe_id = ? LIMIT 1');
+	if (!$stmtStudentCheck) {
+		respondJson(500, ['success' => false, 'message' => 'Failed to prepare query']);
+	}
+	mysqli_stmt_bind_param($stmtStudentCheck, 'i', $classeId);
+	mysqli_stmt_execute($stmtStudentCheck);
+	$studentResult = mysqli_stmt_get_result($stmtStudentCheck);
+	$hasStudents = $studentResult instanceof mysqli_result && mysqli_num_rows($studentResult) > 0;
+	if ($studentResult instanceof mysqli_result) {
+		mysqli_free_result($studentResult);
+	}
+	mysqli_stmt_close($stmtStudentCheck);
+
+	if ($hasStudents) {
+		respondJson(409, ['success' => false, 'message' => 'Cannot delete class containing students']);
+	}
+
+	$stmtSeanceCheck = mysqli_prepare($cnx, 'SELECT id FROM seances WHERE classe_id = ? LIMIT 1');
+	if (!$stmtSeanceCheck) {
+		respondJson(500, ['success' => false, 'message' => 'Failed to prepare query']);
+	}
+	mysqli_stmt_bind_param($stmtSeanceCheck, 'i', $classeId);
+	mysqli_stmt_execute($stmtSeanceCheck);
+	$seanceResult = mysqli_stmt_get_result($stmtSeanceCheck);
+	$hasSeances = $seanceResult instanceof mysqli_result && mysqli_num_rows($seanceResult) > 0;
+	if ($seanceResult instanceof mysqli_result) {
+		mysqli_free_result($seanceResult);
+	}
+	mysqli_stmt_close($stmtSeanceCheck);
+
+	if ($hasSeances) {
+		respondJson(409, ['success' => false, 'message' => 'Cannot delete class assigned to sessions']);
+	}
+
+	$stmtDelete = mysqli_prepare($cnx, 'DELETE FROM classes WHERE id = ?');
+	if (!$stmtDelete) {
+		respondJson(500, ['success' => false, 'message' => 'Failed to prepare query']);
+	}
+	mysqli_stmt_bind_param($stmtDelete, 'i', $classeId);
+	if (!mysqli_stmt_execute($stmtDelete)) {
+		mysqli_stmt_close($stmtDelete);
+		respondJson(400, ['success' => false, 'message' => 'Failed to delete class']);
+	}
+	mysqli_stmt_close($stmtDelete);
+
+	respondJson(200, [
+		'success' => true,
+		'message' => 'Class deleted successfully',
+	]);
 }
 
 $classeId = normalizeInt(requestInput('classe_id'));

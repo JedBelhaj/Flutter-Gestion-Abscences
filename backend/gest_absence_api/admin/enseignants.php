@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../config/database.php';
 
-apiCors(['GET', 'POST', 'OPTIONS']);
+apiCors(['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']);
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
 	respondJson(204, []);
@@ -127,8 +127,74 @@ if ($method === 'GET') {
 	respondJson(200, ['success' => true, 'data' => $data]);
 }
 
-if ($method !== 'POST') {
+if (!in_array($method, ['POST', 'PUT', 'DELETE'], true)) {
 	respondJson(405, ['success' => false, 'message' => 'Method not allowed']);
+}
+
+if ($method === 'DELETE') {
+	$enseignantId = normalizeInt(requestInput('enseignant_id'));
+	if ($enseignantId === null) {
+		respondJson(400, ['success' => false, 'message' => 'enseignant_id is required']);
+	}
+
+	$existing = fetchEnseignantById($cnx, $enseignantId);
+	if ($existing === null) {
+		respondJson(404, ['success' => false, 'message' => 'Teacher not found']);
+	}
+
+	$stmtSeanceCheck = mysqli_prepare($cnx, 'SELECT id FROM seances WHERE enseignant_id = ? LIMIT 1');
+	if (!$stmtSeanceCheck) {
+		respondJson(500, ['success' => false, 'message' => 'Failed to prepare query']);
+	}
+	mysqli_stmt_bind_param($stmtSeanceCheck, 'i', $enseignantId);
+	mysqli_stmt_execute($stmtSeanceCheck);
+	$seanceResult = mysqli_stmt_get_result($stmtSeanceCheck);
+	$hasSeances = $seanceResult instanceof mysqli_result && mysqli_num_rows($seanceResult) > 0;
+	if ($seanceResult instanceof mysqli_result) {
+		mysqli_free_result($seanceResult);
+	}
+	mysqli_stmt_close($stmtSeanceCheck);
+
+	if ($hasSeances) {
+		respondJson(409, [
+			'success' => false,
+			'message' => 'Cannot delete teacher assigned to sessions',
+		]);
+	}
+
+	$userId = (int) $existing['utilisateur_id'];
+
+	mysqli_begin_transaction($cnx);
+	try {
+		$stmtTeacher = mysqli_prepare($cnx, 'DELETE FROM enseignants WHERE id = ?');
+		if (!$stmtTeacher) {
+			throw new RuntimeException('Failed to prepare teacher delete');
+		}
+		mysqli_stmt_bind_param($stmtTeacher, 'i', $enseignantId);
+		if (!mysqli_stmt_execute($stmtTeacher)) {
+			throw new RuntimeException('Failed to delete teacher');
+		}
+		mysqli_stmt_close($stmtTeacher);
+
+		$stmtUser = mysqli_prepare($cnx, 'DELETE FROM utilisateurs WHERE id = ?');
+		if (!$stmtUser) {
+			throw new RuntimeException('Failed to prepare user delete');
+		}
+		mysqli_stmt_bind_param($stmtUser, 'i', $userId);
+		if (!mysqli_stmt_execute($stmtUser)) {
+			throw new RuntimeException('Failed to delete user');
+		}
+		mysqli_stmt_close($stmtUser);
+
+		mysqli_commit($cnx);
+		respondJson(200, [
+			'success' => true,
+			'message' => 'Teacher deleted successfully',
+		]);
+	} catch (Throwable $e) {
+		mysqli_rollback($cnx);
+		respondJson(400, ['success' => false, 'message' => $e->getMessage()]);
+	}
 }
 
 $enseignantId = normalizeInt(requestInput('enseignant_id'));

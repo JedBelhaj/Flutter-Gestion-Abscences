@@ -353,9 +353,24 @@ function base64UrlDecode(string $value): string|false
 
 function getRequestToken(): ?string
 {
-	$header = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
-	if (is_string($header) && preg_match('/^Bearer\s+(.+)$/i', trim($header), $matches) === 1) {
-		return trim($matches[1]);
+	$headerCandidates = [
+		$_SERVER['HTTP_AUTHORIZATION'] ?? null,
+		$_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? null,
+		$_SERVER['Authorization'] ?? null,
+	];
+
+	if (function_exists('getallheaders')) {
+		$headers = getallheaders();
+		if (is_array($headers)) {
+			$headerCandidates[] = $headers['Authorization'] ?? null;
+			$headerCandidates[] = $headers['authorization'] ?? null;
+		}
+	}
+
+	foreach ($headerCandidates as $header) {
+		if (is_string($header) && preg_match('/^Bearer\s+(.+)$/i', trim($header), $matches) === 1) {
+			return trim($matches[1]);
+		}
 	}
 
 	$token = normalizeString(requestInput('token'));

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../config/database.php';
 
-apiCors(['GET', 'POST', 'OPTIONS']);
+apiCors(['GET', 'POST', 'DELETE', 'OPTIONS']);
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
 	respondJson(204, []);
@@ -147,8 +147,52 @@ if ($method === 'GET') {
 	respondJson(200, ['success' => true, 'data' => $data]);
 }
 
-if ($method !== 'POST') {
+if (!in_array($method, ['POST', 'DELETE'], true)) {
 	respondJson(405, ['success' => false, 'message' => 'Method not allowed']);
+}
+
+if ($method === 'DELETE') {
+	$seanceId = normalizeInt(requestInput('seance_id'));
+	if ($seanceId === null) {
+		respondJson(400, ['success' => false, 'message' => 'seance_id is required']);
+	}
+
+	$existing = fetchSeanceById($cnx, $seanceId);
+	if ($existing === null) {
+		respondJson(404, ['success' => false, 'message' => 'Session not found']);
+	}
+
+	mysqli_begin_transaction($cnx);
+	try {
+		$stmtAbsences = mysqli_prepare($cnx, 'DELETE FROM absences WHERE seance_id = ?');
+		if (!$stmtAbsences) {
+			throw new RuntimeException('Failed to prepare absences delete');
+		}
+		mysqli_stmt_bind_param($stmtAbsences, 'i', $seanceId);
+		if (!mysqli_stmt_execute($stmtAbsences)) {
+			throw new RuntimeException('Failed to delete session absences');
+		}
+		mysqli_stmt_close($stmtAbsences);
+
+		$stmtSeance = mysqli_prepare($cnx, 'DELETE FROM seances WHERE id = ?');
+		if (!$stmtSeance) {
+			throw new RuntimeException('Failed to prepare session delete');
+		}
+		mysqli_stmt_bind_param($stmtSeance, 'i', $seanceId);
+		if (!mysqli_stmt_execute($stmtSeance)) {
+			throw new RuntimeException('Failed to delete session');
+		}
+		mysqli_stmt_close($stmtSeance);
+
+		mysqli_commit($cnx);
+		respondJson(200, [
+			'success' => true,
+			'message' => 'Session deleted successfully',
+		]);
+	} catch (Throwable $e) {
+		mysqli_rollback($cnx);
+		respondJson(400, ['success' => false, 'message' => $e->getMessage()]);
+	}
 }
 
 $seanceId = normalizeInt(requestInput('seance_id'));

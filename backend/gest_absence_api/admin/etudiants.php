@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../config/database.php';
 
-apiCors(['GET', 'POST', 'OPTIONS']);
+apiCors(['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']);
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
 	respondJson(204, []);
@@ -163,8 +163,64 @@ if ($method === 'GET') {
 	respondJson(200, ['success' => true, 'data' => $data]);
 }
 
-if ($method !== 'POST') {
+if (!in_array($method, ['POST', 'PUT', 'DELETE'], true)) {
 	respondJson(405, ['success' => false, 'message' => 'Method not allowed']);
+}
+
+if ($method === 'DELETE') {
+	$etudiantId = normalizeInt(requestInput('etudiant_id'));
+	if ($etudiantId === null) {
+		respondJson(400, ['success' => false, 'message' => 'etudiant_id is required']);
+	}
+
+	$existing = fetchEtudiantById($cnx, $etudiantId);
+	if ($existing === null) {
+		respondJson(404, ['success' => false, 'message' => 'Student not found']);
+	}
+
+	$userId = (int) $existing['utilisateur_id'];
+
+	mysqli_begin_transaction($cnx);
+	try {
+		$stmtAbsences = mysqli_prepare($cnx, 'DELETE FROM absences WHERE etudiant_id = ?');
+		if (!$stmtAbsences) {
+			throw new RuntimeException('Failed to prepare absences delete');
+		}
+		mysqli_stmt_bind_param($stmtAbsences, 'i', $etudiantId);
+		if (!mysqli_stmt_execute($stmtAbsences)) {
+			throw new RuntimeException('Failed to delete student absences');
+		}
+		mysqli_stmt_close($stmtAbsences);
+
+		$stmtStudent = mysqli_prepare($cnx, 'DELETE FROM etudiants WHERE id = ?');
+		if (!$stmtStudent) {
+			throw new RuntimeException('Failed to prepare student delete');
+		}
+		mysqli_stmt_bind_param($stmtStudent, 'i', $etudiantId);
+		if (!mysqli_stmt_execute($stmtStudent)) {
+			throw new RuntimeException('Failed to delete student');
+		}
+		mysqli_stmt_close($stmtStudent);
+
+		$stmtUser = mysqli_prepare($cnx, 'DELETE FROM utilisateurs WHERE id = ?');
+		if (!$stmtUser) {
+			throw new RuntimeException('Failed to prepare user delete');
+		}
+		mysqli_stmt_bind_param($stmtUser, 'i', $userId);
+		if (!mysqli_stmt_execute($stmtUser)) {
+			throw new RuntimeException('Failed to delete user');
+		}
+		mysqli_stmt_close($stmtUser);
+
+		mysqli_commit($cnx);
+		respondJson(200, [
+			'success' => true,
+			'message' => 'Student deleted successfully',
+		]);
+	} catch (Throwable $e) {
+		mysqli_rollback($cnx);
+		respondJson(400, ['success' => false, 'message' => $e->getMessage()]);
+	}
 }
 
 $etudiantId = normalizeInt(requestInput('etudiant_id'));
